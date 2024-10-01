@@ -2,16 +2,13 @@ import {v2 as cloudinary} from "cloudinary"
 import fs from "fs"
 
 
-import { v2 as cloudinary } from 'cloudinary';
 
-(async function() {
-
-    // Configuration
-    cloudinary.config({ 
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME , 
-        api_key: process.env.CLOUDINAR_API_KEY, 
-        api_secret: process.env.CLOUDINAR_API_SECRET // Click 'View API Keys' above to copy your API secret
-    });
+// Configuration
+cloudinary.config({ 
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME , 
+    api_key: process.env.CLOUDINAR_API_KEY, 
+    api_secret: process.env.CLOUDINAR_API_SECRET // Click 'View API Keys' above to copy your API secret
+});
     
 
     const uploadOnCloudinary = async (localFilePath) => {
@@ -21,13 +18,15 @@ import { v2 as cloudinary } from 'cloudinary';
                 resource_type: 'auto'
             })
             // file uploaded successfully!! 
-            console.log(`File uploaded successfully to Cloudinary: ${response.url}`);
+            console.log(`File uploaded successfully to Cloudinary`);
+            fs.unlinkSync(localFilePath)
             return response;
         }catch(error){
-            fs.unlinkSynck(localFilePath)
+            fs.unlinkSync(localFilePath)
             return null;
         }
     }    
-})();
+
 
 export { uploadOnCloudinary} 
+
