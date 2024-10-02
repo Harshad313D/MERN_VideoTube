@@ -243,7 +243,7 @@ const changeCurrentPassword = asyncHandler(async (req,res)=>{
     user.password = newPassword
     await user.save({validateBeforeSave: false})
 
-    return res.status(200).json(new ApiResponse("Password changed successfully"))
+    return res.status(200).json(new ApiResponse(200,{},"Password changed successfully"))
 
 
 })
@@ -332,6 +332,81 @@ const updateCoverImage = asyncHandler(async(req,res)=>{
     return res
     .status(200)
     .json(new ApiResponse(200, user, "Cover image updated"))
+})
+
+// get user channel profile
+
+const getUserChannelProfile = asyncHandler(async(req,res)=>{
+    const {username} = req.params 
+    if(!username?.trim()){
+        throw new ApiError("Username is required", 400)
+    }
+
+   const channel = await User.aggregate([
+    {
+        $match:{username:username?.toLowerCase()},
+    },
+    {
+        // in mongo name changes to lower case and becomes plural
+        $lookup:{
+            from: "subscriptions"
+            localField: "_id",
+            foreignField:"channel",
+            as: "subscribers"
+        }
+        // to get subscribers 
+    },
+    {
+        $lookup:{
+            from: "subscriptions"
+            localField: "_id",
+            foreignField:"subscriber",
+            as: "subscribedTo"
+        }
+        // to get subscribed channels
+    },
+    {
+        $addField:{
+            subscribersCount:{
+                $size:"$subscribers"
+            },
+            subscribedToCount:{
+                $size:"$subscribedTo"
+            },
+
+        }
+    },
+    isSubscribed:{
+        $cond:{
+            if:{$in:[req.user?._d, "$subscribers.subscriber"]},
+            then:true,
+            else:true
+        }
+    },
+    {
+        $project:{
+            _id: 1,
+            username: 1,
+            fullName: 1,
+            email: 1,
+            avatar: 1,
+            coverImage: 1,
+            subscribersCount: 1,
+            subscribedToCount: 1,
+            isSubscribed: 1
+        }
+    }
+   
+])
+
+    if(!channel?.length){
+        throw new ApiError("Channel not found", 404)
+    }
+
+    return res
+   .status(200)
+   .json(new ApiResponse(200,channel[0],"User channel fetched !!"))
+
 })
 
 
