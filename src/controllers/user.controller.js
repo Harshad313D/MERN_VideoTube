@@ -349,8 +349,8 @@ const getUserChannelProfile = asyncHandler(async(req,res)=>{
     {
         // in mongo name changes to lower case and becomes plural
         $lookup:{
-            from: "subscriptions"
-            localField: "_id",
+            from: "subscriptions",
+            localField : "_id",
             foreignField:"channel",
             as: "subscribers"
         }
@@ -358,7 +358,7 @@ const getUserChannelProfile = asyncHandler(async(req,res)=>{
     },
     {
         $lookup:{
-            from: "subscriptions"
+            from: "subscriptions",
             localField: "_id",
             foreignField:"subscriber",
             as: "subscribedTo"
@@ -366,23 +366,24 @@ const getUserChannelProfile = asyncHandler(async(req,res)=>{
         // to get subscribed channels
     },
     {
-        $addField:{
+        $addFields:{
             subscribersCount:{
                 $size:"$subscribers"
             },
             subscribedToCount:{
                 $size:"$subscribedTo"
             },
+            isSubscribed : {
+                $cond:{
+                    if:{$in:[req.user?._d, "$subscribers.subscriber"]},
+                    then:true,
+                    else:true
+                }
+            },
 
         }
     },
-    isSubscribed:{
-        $cond:{
-            if:{$in:[req.user?._d, "$subscribers.subscriber"]},
-            then:true,
-            else:true
-        }
-    },
+    
     {
         $project:{
             _id: 1,
